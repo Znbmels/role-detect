@@ -20,10 +20,17 @@ class AnalyzeRequest(BaseModel):
     max_explanations: Optional[int] = Field(None, description="Optional cap on number of segments to explain (first N)")
 
 
+class TalkingHeadEvidence(BaseModel):
+    frame: str
+    description: str
+
+
 class FrameRole(BaseModel):
     frame: str
     role: RoleType
     confidence: float
+    a_role_ratio: float = Field(0.0, ge=0.0, le=1.0, description="Portion of the frame occupied by the on-camera speaker.")
+    b_role_ratio: float = Field(0.0, ge=0.0, le=1.0, description="Portion of the frame occupied by supporting visuals.")
 
 
 class Segment(BaseModel):
@@ -31,10 +38,24 @@ class Segment(BaseModel):
     end: str
     role: RoleType
     explanation: Optional[str] = None
+    a_role_ratio: float = Field(0.0, ge=0.0, le=1.0)
+    b_role_ratio: float = Field(0.0, ge=0.0, le=1.0)
 
 
 class AnalyzeResponse(BaseModel):
     video_id: str
+    is_talkinghead: bool
+    talkinghead_confidence: float = Field(0.0, ge=0.0, le=1.0)
+    talkinghead_evidence: Optional[List[TalkingHeadEvidence]] = None
     roles: List[Segment]
     frames: Optional[List[FrameRole]]
     confidence: Dict[RoleType, float]
+
+
+class BrollMetaResponse(BaseModel):
+    time_start: str = Field(..., description="Time when talking head disappears (format: HH:MM:SS)")
+    time_end: str = Field(..., description="End time of video (format: HH:MM:SS)")
+
+
+class BrollVideoResponse(BaseModel):
+    file_url: str = Field(..., description="URL of the cut video file")

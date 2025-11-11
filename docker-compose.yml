@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  roll-analyzer:
+    build: .
+    container_name: roll-analyzer-api
+    ports:
+      - "8015:8015"
+    environment:
+      # Azure OpenAI credentials - заполни свои значения
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT:-gpt-4o}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-08-01-preview}
+    env_file:
+      - .env
+    volumes:
+      # Монтируем код для hot-reload в dev режиме (можно убрать для prod)
+      - ./app:/app/app
+      # Монтируем директорию с фреймами если нужно
+      - ./img:/app/img
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8015 --reload
+
+
+
+
+

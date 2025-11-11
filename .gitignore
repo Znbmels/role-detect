@@ -1,2 +1,40 @@
+# Environment
 .env
-requirements.txt 
+.env.local
+.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Deployment
+roles_deploy.tar.gz
+start_server.py
+
+# Logs
+*.log 
+
+DEPLOY.md
+QUICKSTART.md
+README.md
+README_DOCKER.md
+.dockerignore
+pack_for_server.sh

@@ -42,17 +42,34 @@ Response body (example):
 ```json
 {
   "video_id": "clip_001",
+  "is_talkinghead": true,
+  "talkinghead_confidence": 0.87,
+  "talkinghead_evidence": [
+    {
+      "frame": "frame_0003.jpg",
+      "description": "Host looks into camera, medium close-up."
+    }
+  ],
   "roles": [
-    { "start": "00:00", "end": "00:24", "role": "A-roll" },
-    { "start": "00:25", "end": "00:35", "role": "B-roll" }
+    { "start": "00:00", "end": "00:02", "role": "C-roll", "a_role_ratio": 0.0, "b_role_ratio": 1.0 },
+    { "start": "00:02", "end": "00:10", "role": "A-roll", "a_role_ratio": 0.52, "b_role_ratio": 0.48 }
   ],
   "frames": [
-    { "frame": "frame_0001.jpg", "role": "A-roll", "confidence": 0.95 },
-    { "frame": "frame_0002.jpg", "role": "A-roll", "confidence": 0.92 }
+    { "frame": "frame_0001.jpg", "role": "A-roll", "confidence": 0.95, "a_role_ratio": 0.9, "b_role_ratio": 0.1 }
   ],
   "confidence": { "A-roll": 0.94, "B-roll": 0.89 }
 }
 ```
+
+- `a_role_ratio` captures how much of the frame/segment is occupied by the speaking person (A-roll) versus supporting visuals (`b_role_ratio`). The values stay between 0 and 1 and roughly sum to 1.
+- Segment explanations reuse the first frame of each segment; cap how many are generated via `max_explanations`.
+
+### Talking head detection
+
+- Before interpreting the roll segments, check `is_talkinghead`. The detector looks for several confident A-roll frames where the on-camera speaker occupies at least ~35% of the frame and appears in consecutive frames.
+- `talkinghead_confidence` is a heuristic score (0-1) derived from proportion of such frames and their longest consecutive run.
+- `talkinghead_evidence` lists a few representative frames with short explanations so you can inspect why the clip was judged as a talking head.
+- If `is_talkinghead = false` you can skip downstream A/B analysis entirely (segments/frames are still returned for debugging or alternative uses).
 
 Notes:
 

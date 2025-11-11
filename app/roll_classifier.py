@@ -14,7 +14,9 @@ SYSTEM_PROMPT = (
     "- B-roll: supporting visuals without a speaking face: screen/UI/phone, product close-ups, scenery, cutaways, captions on plain background.\n"
     "- C-roll: very short decorative inserts (memes/reactions/micro-cutaways/motion design).\n"
     "If a smartphone UI or interface dominates the frame, prefer B-roll.\n"
-    "Respond ONLY with strict JSON: {\"role\": \"A-roll|B-roll|C-roll\", \"confidence\": number 0..1, \"explanation\": \"short reason\"}."
+    "Return JSON with: role, confidence (0-1), explanation (<=120 chars), a_role_ratio, b_role_ratio.\n"
+    "a_role_ratio = portion of the frame occupied by the person/talking head; b_role_ratio = remaining supporting visuals. "
+    "Ensure both are between 0 and 1 and roughly sum to 1 (within 0.05)."
 )
 
 
@@ -42,7 +44,7 @@ def classify_frame(
     api_version: str,
     deployment_name: str,
     data_uri: str,
-) -> Tuple[str, float, str]:
+) -> Tuple[str, float, str, float, float]:
     """Returns (role, confidence, explanation) using Azure OpenAI REST API."""
     url = f"{azure_endpoint.rstrip('/')}/openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
     headers = {
@@ -83,7 +85,23 @@ def classify_frame(
 
     confidence = max(0.0, min(1.0, confidence))
     explanation = str(payload.get("explanation", "")).strip()
-    return role, confidence, explanation
+
+    def _ratio(key: str) -> float:
+        try:
+            return max(0.0, min(1.0, float(payload.get(key, 0.0))))
+        except Exception:
+            return 0.0
+
+    a_ratio = _ratio("a_role_ratio")
+    b_ratio = _ratio("b_role_ratio")
+    if a_ratio == 0.0 and b_ratio == 0.0:
+        if role == "A-roll":
+            a_ratio, b_ratio = 0.9, 0.1
+        elif role == "B-roll":
+            a_ratio, b_ratio = 0.0, 1.0
+        else:
+            a_ratio, b_ratio = 0.2, 0.8
+    return role, confidence, explanation, round(a_ratio, 3), round(b_ratio, 3)
 
 
 SYSTEM_PROMPT_EXPLAIN = (
